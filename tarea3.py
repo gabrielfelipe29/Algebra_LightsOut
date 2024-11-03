@@ -137,61 +137,63 @@ def generar_solucion(matriz):
 def eliminacion_gauss(matriz, vector_b):
     # matriz: la matriz de movimientos
     # vector_b: es el vector con el valor de cada posicion de la matriz original
+    try:
+        if matriz is None or vector_b is None:
+            print("Faltan parametros")
+            return
 
-    if matriz is None or vector_b is None:
-        print("Faltan parametros")
-        return
+        # Transforma la matriz y vector_b en matrices
+        b = sp.Matrix(vector_b)
+        A = sp.Matrix(matriz)
 
-    # Transforma la matriz y vector_b en matrices
-    b = sp.Matrix(vector_b)
-    A = sp.Matrix(matriz)
+        if b.shape[1] > 1 or b.shape[0] != A.shape[0]:
+            print("El vector constante tiene tamano incorrecto")
+            return
 
-    if b.shape[1] > 1 or b.shape[0] != A.shape[0]:
-        print("El vector constante tiene tamano incorrecto")
-        return
+        # Cantidad de filas de la matriz
+        n = A.shape[0]
 
-    # Cantidad de filas de la matriz
-    n = A.shape[0]
+        # Crea la matriz extendida juntando la matriz con el vector_b
+        extendida = A.row_join(b)
 
-    # Crea la matriz extendida juntando la matriz con el vector_b
-    extendida = A.row_join(b)
+        # Cantidad de filas de la matriz extendida
+        filas = extendida.shape[0]
 
-    # Cantidad de filas de la matriz extendida
-    filas = extendida.shape[0]
+        # Hace la eliminación de las posiciones de la matriz
+        for i in range(n):
+            # Verifica que la matriz en esa posicion no sea 0, y si lo es, intercambia esa fila por una que no lo es, que va
+            # a ser la fila que se va a usar como pivote
+            if extendida[i, i] == 0:
+                for j in range(i + 1, filas):
+                    if extendida[j, i] == 1:
+                        extendida.row_swap(i, j)
+                        break
 
-    # Hace la eliminación de las posiciones de la matriz
-    for i in range(n):
-        # Verifica que la matriz en esa posicion no sea 0, y si lo es, intercambia esa fila por una que no lo es, que va
-        # a ser la fila que se va a usar como pivote
-        if extendida[i, i] == 0:
+            # Para todas las filas abajo de la fila pivote, si tienen un uno en la posicion [j,i], entonces se suma la fila del pivote
+            # con la fila actual, y se realiza el modulo 2 para que sea una suma binaria
             for j in range(i + 1, filas):
                 if extendida[j, i] == 1:
-                    extendida.row_swap(i, j)
-                    break
+                    extendida.row_op(j, lambda x, _: (x + extendida[i, _]) % 2)
 
-        # Para todas las filas abajo de la fila pivote, si tienen un uno en la posicion [j,i], entonces se suma la fila del pivote
-        # con la fila actual, y se realiza el modulo 2 para que sea una suma binaria
-        for j in range(i + 1, filas):
-            if extendida[j, i] == 1:
-                extendida.row_op(j, lambda x, _: (x + extendida[i, _]) % 2)
+        # Crea un arreglo solo con ceros del mismo tamaño que la matriz
+        solucion = [0] * n
+        for i in range(n - 1, -1, -1):
+            # Calcula cada elemento de la solucion restandole la suma de los valores de la derecha del pivote y haciendole el modulo 2
+            solucion[i] = (extendida[i, -1] - sum(extendida[i, k] *
+                                                  solucion[k] for k in range(i + 1, n))) % 2
 
-    # Crea un arreglo solo con ceros del mismo tamaño que la matriz
-    solucion = [0] * n
-    for i in range(n - 1, -1, -1):
-        # Calcula cada elemento de la solucion restandole la suma de los valores de la derecha del pivote y haciendole el modulo 2
-        solucion[i] = (extendida[i, -1] - sum(extendida[i, k] *
-                       solucion[k] for k in range(i + 1, n))) % 2
-
-    return solucion
+        return solucion
+    except:
+        print("Falló la escalarización")
+        return
 
 
 def main():
-    # matriz = generar_matriz_invertible(4)
-    
+
     matriz = [[0, 1, 0],
               [0, 0, 0],
               [0, 0, 0]]
-    
+
     """
     matriz = [[0, 0, 0],
             [1, 1, 1],
@@ -228,5 +230,12 @@ def main():
         print("Posiciones a presionar: ", obtener_posicion(solucion))
 
 
+def generar_matriz(n):
+    return sp.Matrix(n, n, lambda i, j: random.randint(0, 1))
+
+
 if __name__ == "__main__":
+
     main()
+
+
